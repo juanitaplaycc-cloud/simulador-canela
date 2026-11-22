@@ -1,0 +1,14 @@
+{
+  "envioGratisDesde": 120000,
+  "costoEnvio": 8000,
+  "cupones": [
+    {
+      "codigo": "DULCE10",
+      "descuento": 0.1
+    },
+    {
+      "codigo": "BIENVENIDA5",
+      "descuento": 0.05
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Canela Pastelería: tortas, cupcakes, galletas y postres hechos a mano. Arma tu pedido, aplica tu cupón y calcula tu total al instante." />
+  <title>Canela Pastelería · Simulador de pedidos</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+
+  <!-- Librerías por CDN: Toastify (avisos) y SweetAlert2 (confirmaciones y detalles) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js" defer></script>
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <!-- Aviso temporizado (setTimeout): aparece unos segundos después de entrar -->
+  <aside id="aviso-cupon" class="aviso" role="status" hidden>
+    <p class="aviso__texto">
+      Regalo de bienvenida: usa el cupón <strong id="aviso-codigo">DULCE10</strong> y obtén
+      <strong id="aviso-porcentaje">10%</strong> de descuento en tu pedido.
+    </p>
+    <div class="aviso__acciones">
+      <button type="button" class="boton boton--claro" id="aviso-aplicar">Aplicar cupón</button>
+      <button type="button" class="boton boton--texto" id="aviso-cerrar">Cerrar</button>
+    </div>
+  </aside>
+
+  <header class="hero">
+    <nav class="hero__nav" aria-label="Principal">
+      <span class="marca">Canela Pastelería</span>
+      <div class="hero__enlaces">
+        <a href="#menu">Menú</a>
+        <a href="#pedido">Mi pedido</a>
+        <a href="#inspiracion">Inspiración</a>
+      </div>
+    </nav>
+
+    <div class="hero__grid">
+      <div class="hero__texto">
+        <p class="eyebrow">Pastelería artesanal</p>
+        <h1>Dulces hechos a mano, listos para tu mesa.</h1>
+        <p class="hero__parrafo">
+          Elige tus tortas, cupcakes y postres, arma tu pedido y conoce al instante cuánto pagarás, con cupón y domicilio incluidos.
+        </p>
+        <a class="boton boton--grande-inline" href="#menu">Ver el menú</a>
+
+        <dl class="hero__stats">
+          <div><dt>Productos en el menú</dt><dd id="stat-productos">12</dd></div>
+          <div><dt>Domicilio gratis desde</dt><dd id="stat-envio">$120.000</dd></div>
+          <div><dt>Pedidos con anticipación</dt><dd>24 h</dd></div>
+        </dl>
+      </div>
+      <div id="hero-imagen" class="hero__imagen"></div>
+    </div>
+  </header>
+  <div class="feston" aria-hidden="true"></div>
+
+  <main class="contenido">
+    <section id="menu" class="catalogo" aria-labelledby="titulo-menu">
+      <div class="catalogo__cabecera">
+        <h2 id="titulo-menu">Nuestro menú</h2>
+        <p id="contador" class="contador" aria-live="polite"></p>
+      </div>
+
+      <div class="herramientas">
+        <div class="herramientas__buscar">
+          <label for="buscar" class="visualmente-oculto">Buscar producto</label>
+          <input id="buscar" type="search" placeholder="Buscar torta, galleta, postre…" autocomplete="off" />
+        </div>
+        <div class="herramientas__orden">
+          <label for="orden">Ordenar por</label>
+          <select id="orden">
+            <option value="destacados">Destacados</option>
+            <option value="precio-asc">Precio: menor a mayor</option>
+            <option value="precio-desc">Precio: mayor a menor</option>
+            <option value="nombre">Nombre (A-Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="herramientas herramientas--filtros">
+        <div id="filtros" class="filtros" role="group" aria-label="Filtrar por categoría"></div>
+        <label class="casilla">
+          <input type="checkbox" id="solo-disponibles" />
+          Solo disponibles
+        </label>
+      </div>
+
+      <label class="casilla casilla--simular">
+        <input type="checkbox" id="simular-error" />
+        Simular error de conexión (para probar el manejo de errores)
+      </label>
+
+      <p id="estado-carga" class="estado" role="status" hidden>Cargando el menú…</p>
+
+      <div id="error-carga" class="error-panel" role="alert" hidden>
+        <p id="error-carga-texto"></p>
+        <button type="button" class="boton" id="reintentar">Reintentar</button>
+      </div>
+
+      <div id="lista-productos" class="productos" aria-live="polite"></div>
+      <p id="sin-resultados" class="vacio" hidden>No encontramos productos con esos filtros. Prueba con otra búsqueda.</p>
+    </section>
+
+    <aside id="pedido" class="pedido" aria-labelledby="titulo-pedido">
+      <h2 id="titulo-pedido">Mi pedido</h2>
+
+      <p id="pedido-vacio" class="vacio">Tu pedido está vacío. Agrega productos desde el menú.</p>
+      <ul id="lista-pedido" class="lineas"></ul>
+
+      <form id="form-cupon" class="cupon" novalidate>
+        <label for="input-cupon">Cupón de descuento</label>
+        <div class="cupon__fila">
+          <input id="input-cupon" type="text" autocomplete="off" placeholder="Ej: DULCE10" />
+          <button type="submit" class="boton boton--borde">Aplicar</button>
+        </div>
+        <p id="cupon-estado" class="cupon__estado" role="status" hidden></p>
+      </form>
+
+      <dl class="totales">
+        <div><dt>Subtotal</dt><dd id="p-subtotal">$0</dd></div>
+        <div id="fila-descuento" hidden><dt>Descuento</dt><dd id="p-descuento">$0</dd></div>
+        <div><dt>Domicilio</dt><dd id="p-envio">$0</dd></div>
+        <div class="totales__final"><dt>Total a pagar</dt><dd id="p-total">$0</dd></div>
+      </dl>
+      <p id="p-ayuda-envio" class="ayuda"></p>
+
+      <form id="form-pedido" class="datos" novalidate>
+        <h3>Datos de entrega</h3>
+
+        <fieldset class="entrega">
+          <legend class="visualmente-oculto">Tipo de entrega</legend>
+          <label class="opcion"><input type="radio" name="entrega" value="domicilio" checked /> Domicilio</label>
+          <label class="opcion"><input type="radio" name="entrega" value="recogida" /> Recoger en tienda</label>
+        </fieldset>
+
+        <div class="campo">
+          <label for="input-nombre">Nombre completo</label>
+          <input id="input-nombre" type="text" autocomplete="name" maxlength="50" />
+        </div>
+        <div class="campo">
+          <label for="input-telefono">Celular</label>
+          <input id="input-telefono" type="tel" autocomplete="tel" inputmode="numeric" maxlength="14" placeholder="Ej: 3001234567" />
+        </div>
+        <div id="campo-direccion" class="campo">
+          <label for="input-direccion">Dirección de entrega</label>
+          <input id="input-direccion" type="text" autocomplete="street-address" maxlength="80" placeholder="Calle 10 # 5-20, barrio" />
+        </div>
+        <div class="campo">
+          <label for="input-fecha">Fecha de entrega</label>
+          <input id="input-fecha" type="date" />
+        </div>
+        <div class="campo">
+          <label for="input-dedicatoria">Dedicatoria (opcional)</label>
+          <input id="input-dedicatoria" type="text" maxlength="40" placeholder="Ej: ¡Feliz cumpleaños, mamá!" />
+        </div>
+
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+
+        <button type="submit" id="btn-confirmar" class="boton boton--grande">Confirmar pedido</button>
+        <button type="button" id="btn-vaciar" class="boton boton--borde boton--bloque boton--separado">Vaciar pedido</button>
+      </form>
+
+      <p id="mensaje" class="mensaje" role="status" aria-live="polite" hidden></p>
+    </aside>
+  </main>
+
+  <section id="inspiracion" class="inspiracion" aria-labelledby="titulo-inspiracion">
+    <div class="inspiracion__interior">
+      <div class="catalogo__cabecera">
+        <div>
+          <h2 id="titulo-inspiracion">Inspiración: postres del mundo</h2>
+          <p class="contador">Ideas de postres y recetas para prepararlos
+
+          </p>
+        </div>
+        <button type="button" class="boton boton--borde" id="actualizar-inspiracion">Actualizar ideas</button>
+      </div>
+
+      <p id="estado-inspiracion" class="estado" role="status" hidden>Cargando ideas de postres…</p>
+
+      <div id="error-inspiracion" class="error-panel" role="alert" hidden>
+        <p id="error-inspiracion-texto"></p>
+        <button type="button" class="boton" id="reintentar-inspiracion">Reintentar</button>
+      </div>
+
+      <div id="lista-inspiracion" class="ideas"></div>
+    </div>
+  </section>
+
+  <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+
+  <footer class="pie">
+    <p>Desde el 2020</p>
+  </footer>
+</body>
+</html>
